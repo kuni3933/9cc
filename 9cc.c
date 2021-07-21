@@ -14,6 +14,7 @@ typedef enum {
   TK_NUM,      // Integer literals
   TK_EOF,      // End-of-file markers
 } TokenKind;
+
 // Token type
 typedef struct Token Token;
 struct Token {
@@ -22,10 +23,13 @@ struct Token {
   int val;        // If kind is TK_NUM, its value
   char *str;      // Token string
 };
+
 // Input program
 char *user_input;
+
 // Current token
 Token *token;
+
 // Reports an error and exit.
 void error(char *fmt, ...) {
   va_list ap;
@@ -34,10 +38,12 @@ void error(char *fmt, ...) {
   fprintf(stderr, "\n");
   exit(1);
 }
+
 // Reports an error location and exit.
 void error_at(char *loc, char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
+
   int pos = loc - user_input;
   fprintf(stderr, "%s\n", user_input);
   fprintf(stderr, "%*s", pos, ""); // print pos spaces.
@@ -46,6 +52,7 @@ void error_at(char *loc, char *fmt, ...) {
   fprintf(stderr, "\n");
   exit(1);
 }
+
 // Consumes the current token if it matches `op`.
 bool consume(char op) {
   if (token->kind != TK_RESERVED || token->str[0] != op)
@@ -53,12 +60,14 @@ bool consume(char op) {
   token = token->next;
   return true;
 }
+
 // Ensure that the current token is `op`.
 void expect(char op) {
   if (token->kind != TK_RESERVED || token->str[0] != op)
     error_at(token->str, "expected '%c'", op);
   token = token->next;
 }
+
 // Ensure that the current token is TK_NUM.
 int expect_number() {
   if (token->kind != TK_NUM)
@@ -67,9 +76,11 @@ int expect_number() {
   token = token->next;
   return val;
 }
+
 bool at_eof() {
   return token->kind == TK_EOF;
 }
+
 // Create a new token and add it as the next token of `cur`.
 Token *new_token(TokenKind kind, Token *cur, char *str) {
   Token *tok = calloc(1, sizeof(Token));
@@ -78,12 +89,14 @@ Token *new_token(TokenKind kind, Token *cur, char *str) {
   cur->next = tok;
   return tok;
 }
+
 // Tokenize `user_input` and returns new tokens.
 Token *tokenize() {
   char *p = user_input;
   Token head;
   head.next = NULL;
   Token *cur = &head;
+
   while (*p) {
     // Skip whitespace characters.
     if (isspace(*p)) {
@@ -96,6 +109,7 @@ Token *tokenize() {
       cur = new_token(TK_RESERVED, cur, p++);
       continue;
     }
+
     // Integer literal
     if (isdigit(*p)) {
       cur = new_token(TK_NUM, cur, p);
