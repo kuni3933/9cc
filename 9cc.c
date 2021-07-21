@@ -7,8 +7,8 @@
 
 //
 // Tokenizer
-//
 
+//
 typedef enum {
   TK_RESERVED, // Keywords or punctuators
   TK_NUM,      // Integer literals
@@ -96,30 +96,30 @@ Token *tokenize() {
   Token head;
   head.next = NULL;
   Token *cur = &head;
-
   while (*p) {
+    
     // Skip whitespace characters.
     if (isspace(*p)) {
       p++;
       continue;
     }
-
+    
     // Punctuator
     if (strchr("+-*/()", *p)) {
       cur = new_token(TK_RESERVED, cur, p++);
       continue;
     }
-
+    
     // Integer literal
     if (isdigit(*p)) {
       cur = new_token(TK_NUM, cur, p);
       cur->val = strtol(p, &p, 10);
       continue;
     }
-
+    
     error_at(p, "invalid token");
   }
-
+  
   new_token(TK_EOF, cur, p);
   return head.next;
 }
@@ -166,6 +166,7 @@ Node *new_num(int val) {
 
 Node *expr();
 Node *mul();
+Node *unary();
 Node *primary();
 
 // expr = mul ("+" mul | "-" mul)*
@@ -182,18 +183,28 @@ Node *expr() {
   }
 }
 
-// mul = primary ("*" primary | "/" primary)*
+// mul = unary ("*" unary | "/" unary)*
 Node *mul() {
-  Node *node = primary();
+  Node *node = unary();
 
   for (;;) {
     if (consume('*'))
-      node = new_binary(ND_MUL, node, primary());
+      node = new_binary(ND_MUL, node, unary());
     else if (consume('/'))
-      node = new_binary(ND_DIV, node, primary());
+      node = new_binary(ND_DIV, node, unary());
     else
       return node;
   }
+}
+
+// unary = ("+" | "-")? unary
+//       | primary
+Node *unary() {
+  if (consume('+'))
+    return unary();
+  if (consume('-'))
+    return new_binary(ND_SUB, new_num(0), unary());
+  return primary();
 }
 
 // primary = "(" expr ")" | num
@@ -203,7 +214,7 @@ Node *primary() {
     expect(')');
     return node;
   }
-
+  
   return new_num(expect_number());
 }
 
@@ -216,13 +227,13 @@ void gen(Node *node) {
     printf("  push %d\n", node->val);
     return;
   }
-
+  
   gen(node->lhs);
   gen(node->rhs);
-
+  
   printf("  pop rdi\n");
   printf("  pop rax\n");
-
+  
   switch (node->kind) {
   case ND_ADD:
     printf("  add rax, rdi\n");
@@ -238,7 +249,7 @@ void gen(Node *node) {
     printf("  idiv rdi\n");
     break;
   }
-
+  
   printf("  push rax\n");
 }
 
@@ -250,15 +261,15 @@ int main(int argc, char **argv) {
   user_input = argv[1];
   token = tokenize();
   Node *node = expr();
-
+  
   // Print out the first half of assembly.
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");
   printf("main:\n");
-
+  
   // Traverse the AST to emit assembly.
   gen(node);
-
+  
   // A result must be at the top of the stack, so pop it
   // to RAX to make it a program exit code.
   printf("  pop rax\n");
