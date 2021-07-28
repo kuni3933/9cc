@@ -17,6 +17,7 @@ main:
 	subq	$16, %rsp
 	movl	$0, -8(%rbp)
 	movl	$0, -4(%rbp)
+	movl	$0, -4(%rbp)
 	jmp	.L2
 .L3:
 	movl	-4(%rbp), %eax
