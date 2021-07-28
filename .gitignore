@@ -1,5 +1,10 @@
-*~
-*.o
-tmp*
-a.out
-9cc
+**/*~
+**/\#*
+**/*.o
+**/*.s
+**/a.out
+/tmp*
+/thirdparty
+/chibicc
+/test/*.exe
+/stage2
